@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HypoTech</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            width: 300px;
+            font-family: 'DM Sans', sans-serif;
+            background: #080c1a;
+            color: #e8eeff;
+            padding: 0;
+            min-height: 360px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0d1228, #0a0f22);
+            border-bottom: 1px solid rgba(120,140,220,0.12);
+            padding: 18px 20px 16px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .logo { font-size: 1.6rem; filter: drop-shadow(0 0 8px rgba(200,216,255,0.4)); }
+        .logo-text { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800; }
+        .logo-sub  { font-size: 0.68rem; color: #4a5580; margin-top: 1px; }
+
+        .status-bar {
+            padding: 14px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid rgba(120,140,220,0.08);
+        }
+        .status-indicator {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.82rem; font-weight: 600;
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+        .dot.sleep  { background: #6366f1; box-shadow: 0 0 8px #6366f1; animation: pulse 2s infinite; }
+        .dot.awake  { background: #34d399; box-shadow: 0 0 8px #34d399; }
+        .dot.off    { background: #4a5580; }
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.5} }
+
+        .toggle-btn {
+            width: 40px; height: 22px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 11px; border: 1px solid rgba(120,140,220,0.2);
+            position: relative; cursor: pointer; transition: background 0.3s;
+        }
+        .toggle-btn.on { background: linear-gradient(135deg, #6366f1, #8b5cf6); border-color: transparent; }
+        .toggle-btn::after {
+            content: ''; width: 16px; height: 16px;
+            background: #fff; border-radius: 50%;
+            position: absolute; top: 2px; left: 2px;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .toggle-btn.on::after { transform: translateX(18px); }
+
+        .info-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 1px; background: rgba(120,140,220,0.08);
+            border-top: 1px solid rgba(120,140,220,0.08);
+            border-bottom: 1px solid rgba(120,140,220,0.08);
+        }
+        .info-cell {
+            background: #080c1a;
+            padding: 14px 16px;
+        }
+        .info-label { font-size: 0.65rem; color: #4a5580; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 4px; }
+        .info-val   { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: #c8d8ff; }
+
+        .blocked-count { font-size: 0.72rem; color: #8898cc; margin-top: 2px; }
+
+        .actions { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+        .btn {
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+        }
+        .btn-primary:hover { transform: translateY(-1px); }
+        .btn-outline {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(120,140,220,0.15);
+            color: #8898cc;
+        }
+        .btn-outline:hover { border-color: rgba(99,102,241,0.3); color: #e8eeff; }
+
+        .login-section { padding: 20px; }
+        .login-input {
+            width: 100%; background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(120,140,220,0.2);
+            border-radius: 8px; color: #e8eeff;
+            padding: 9px 12px; font-size: 0.82rem;
+            font-family: 'DM Sans', sans-serif;
+            outline: none; margin-bottom: 8px;
+        }
+        .login-input:focus { border-color: #6366f1; }
+        .login-input::placeholder { color: #4a5580; }
+        .error-msg { font-size: 0.75rem; color: #f87171; margin-bottom: 8px; }
+
+        .footer {
+            padding: 10px 16px;
+            text-align: center;
+            font-size: 0.68rem;
+            color: #4a5580;
+            border-top: 1px solid rgba(120,140,220,0.08);
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="logo">🌙</div>
+    <div>
+        <div class="logo-text">HypoTech</div>
+        <div class="logo-sub">Sleep Guardian</div>
+    </div>
+</div>
+
+<!-- Not logged in -->
+<div id="login-view" style="display:none">
+    <div class="login-section">
+        <div style="font-size:0.82rem;color:#8898cc;margin-bottom:14px;">
+            Login to sync your sleep schedule and enable blocking.
+        </div>
+        <input class="login-input" id="email-input"    type="email"    placeholder="Email address" />
+        <input class="login-input" id="password-input" type="password" placeholder="Password" />
+        <div class="error-msg" id="login-error" style="display:none"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">
+            🔓 Login to HypoTech
+        </button>
+        <div style="margin-top:10px;text-align:center">
+            <a href="http://localhost:5173" target="_blank" style="font-size:0.75rem;color:#6366f1;text-decoration:none;">
+                Register on Dashboard →
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Logged in -->
+<div id="main-view" style="display:none">
+    <div class="status-bar">
+        <div class="status-indicator">
+            <div class="dot" id="status-dot"></div>
+            <span id="status-text">Checking...</span>
+        </div>
+        <div class="toggle-btn" id="guard-toggle" onclick="toggleGuard()"></div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-cell">
+            <div class="info-label">Sleep Time</div>
+            <div class="info-val" id="sleep-time">10:00 PM</div>
+        </div>
+        <div class="info-cell">
+            <div class="info-label">Wake Time</div>
+            <div class="info-val" id="wake-time">6:00 AM</div>
+        </div>
+        <div class="info-cell">
+            <div class="info-label">Sites Blocked</div>
+            <div class="info-val" id="site-count">12</div>
+            <div class="blocked-count">during sleep</div>
+        </div>
+        <div class="info-cell">
+            <div class="info-label">Current Time</div>
+            <div class="info-val" id="live-time">—</div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-primary" onclick="openDashboard()">
+            🌐 Open Dashboard
+        </button>
+        <button class="btn btn-outline" onclick="forceSync()">
+            🔄 Sync Schedule Now
+        </button>
+        <button class="btn btn-outline" onclick="doLogout()" style="color:#f87171;border-color:rgba(248,113,113,0.2)">
+            🚪 Logout
+        </button>
+    </div>
+</div>
+
+<div class="footer">HypoTech v1.0 · Protecting your sleep 🌙</div>
+
+<script>
+    const API = "http://localhost:5000/api";
+
+    function formatTime12(t) {
+        if (!t) return "—";
+        const [h, m] = t.split(":").map(Number);
+        return `${h % 12 || 12}:${String(m).padStart(2,"0")} ${h >= 12 ? "PM" : "AM"}`;
+    }
+
+    function updateClock() {
+        const t = new Date().toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit", hour12:true });
+        const el = document.getElementById("live-time");
+        if (el) el.textContent = t;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Check token on open
+    chrome.storage.local.get(["hypotech_token"], ({ hypotech_token }) => {
+        if (hypotech_token) showMain();
+        else showLogin();
+    });
+
+    function showLogin() {
+        document.getElementById("login-view").style.display = "block";
+        document.getElementById("main-view").style.display  = "none";
+    }
+    function showMain() {
+        document.getElementById("login-view").style.display = "none";
+        document.getElementById("main-view").style.display  = "block";
+        loadStatus();
+    }
+
+    function loadStatus() {
+        chrome.runtime.sendMessage({ type: "GET_STATUS" }, (res) => {
+            if (!res) return;
+            const dot    = document.getElementById("status-dot");
+            const text   = document.getElementById("status-text");
+            const toggle = document.getElementById("guard-toggle");
+
+            if (!res.guardActive) {
+                dot.className = "dot off"; text.textContent = "Guard Disabled";
+                toggle.classList.remove("on");
+            } else if (res.isSleepTime) {
+                dot.className = "dot sleep"; text.textContent = "🔒 Sleep Mode ON";
+                toggle.classList.add("on");
+            } else {
+                dot.className = "dot awake"; text.textContent = "✅ Awake Mode";
+                toggle.classList.add("on");
+            }
+
+            if (res.schedule) {
+                document.getElementById("sleep-time").textContent = formatTime12(res.schedule.sleep_time);
+                document.getElementById("wake-time").textContent  = formatTime12(res.schedule.wake_time);
+            }
+        });
+
+        chrome.storage.local.get(["blockedSites"], ({ blockedSites }) => {
+            const el = document.getElementById("site-count");
+            if (el && blockedSites) el.textContent = blockedSites.length;
+        });
+    }
+
+    async function doLogin() {
+        const email    = document.getElementById("email-input").value.trim();
+        const password = document.getElementById("password-input").value;
+        const errEl    = document.getElementById("login-error");
+        errEl.style.display = "none";
+
+        try {
+            const res  = await fetch(`${API}/auth/login`, {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body:    JSON.stringify({ email, password }),
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message);
+
+            chrome.runtime.sendMessage({ type: "SET_TOKEN", token: data.token }, () => showMain());
+        } catch (err) {
+            errEl.style.display = "block";
+            errEl.textContent   = "⚠️ " + err.message;
+        }
+    }
+
+    function doLogout() {
+        chrome.storage.local.remove(["hypotech_token","schedule","blockedSites"], showLogin);
+    }
+
+    function toggleGuard() {
+        chrome.runtime.sendMessage({ type: "GET_STATUS" }, (res) => {
+            const newVal = !(res && res.guardActive);
+            chrome.runtime.sendMessage({ type: "TOGGLE_GUARD", value: newVal }, loadStatus);
+        });
+    }
+
+    function forceSync() {
+        chrome.runtime.sendMessage({ type: "FORCE_SYNC" }, () => {
+            loadStatus();
+            alert("✅ Schedule synced from HypoTech API!");
+        });
+    }
+
+    function openDashboard() {
+        chrome.tabs.create({ url: "http://localhost:5173" });
+    }
+</script>
+</body>
+</html>
